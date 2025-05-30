@@ -14,6 +14,7 @@
 
 # ignore scene of desert
 /Assets/assemble/desert/
+/Assets/assemble/knife wood/
 
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data
