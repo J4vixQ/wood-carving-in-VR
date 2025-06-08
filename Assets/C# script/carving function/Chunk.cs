@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.XR;
+
 
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
@@ -23,6 +25,10 @@ public class Chunk : MonoBehaviour
     private bool allClear = false; // set it to True if there is no mesh in this chunk, which means that we can skip the collision and checking.
 
     private Knife _knife;
+
+    private AudioSource audioSource;
+    private AudioClip[] carvingClips;
+
     public void Setup(float size, float stepSize, Material material)
     {
         this.size = size;
@@ -38,6 +44,10 @@ public class Chunk : MonoBehaviour
         MakeGridPoints();
         MarchCubes();
         _knife = GameObject.Find("Knife").GetComponent<Knife>();
+
+        audioSource = gameObject.AddComponent<AudioSource>();
+        carvingClips = Resources.LoadAll<AudioClip>("Audio/CarvingSounds");
+
     }
 
     public void OnTriggerStay(Collider other)
@@ -52,6 +62,8 @@ public class Chunk : MonoBehaviour
                     MarchCubes();
                     // var endTime = Time.realtimeSinceStartup;
                     // Debug.Log($"MarchCubes: {endTime - startTime} seconds");
+                    SendHapticFeedback();
+                    PlayCarvingSound();
                 }
             }
         }    
@@ -188,4 +200,26 @@ public class Chunk : MonoBehaviour
             uvAlternate = !uvAlternate;
         }
     }
+
+    private void SendHapticFeedback()
+    {
+        InputDevice rightHand = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
+        if (rightHand.isValid && rightHand.TryGetHapticCapabilities(out HapticCapabilities capabilities))
+        {
+            if (capabilities.supportsImpulse)
+            {
+                rightHand.SendHapticImpulse(0u, 0.5f, 0.1f);  // 通道0, 强度0.5, 持续0.1秒
+            }
+        }
+    }
+
+    private void PlayCarvingSound()
+    {
+        if (carvingClips != null && carvingClips.Length > 0)
+        {
+            var clip = carvingClips[Random.Range(0, carvingClips.Length)];
+            audioSource.PlayOneShot(clip);
+        }
+    }
+
 }
