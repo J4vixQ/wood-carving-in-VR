@@ -25,6 +25,10 @@ public class Chunk : MonoBehaviour
     private bool allClear = false; // set it to True if there is no mesh in this chunk, which means that we can skip the collision and checking.
 
     private Knife _knife;
+
+    private AudioSource audioSource;
+    private AudioClip[] carvingClips;
+
     public void Setup(float size, float stepSize, Material material)
     {
         this.size = size;
