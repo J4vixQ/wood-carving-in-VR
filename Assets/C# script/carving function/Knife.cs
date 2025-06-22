@@ -203,7 +203,7 @@ public class Knife : MonoBehaviour
         //transform.rotation = _rotation;
 
         blade_direction = _referencePointDict["Point0"].transform.position - _referencePointDict["Point0-1"].transform.position;
-        carving_flag = Vector3.Dot(blade_direction, movement) > 0.0f;
+        carving_flag = (Vector3.Dot(blade_direction, movement)/(blade_direction.magnitude*movement.magnitude)) > 0.5f;
         last_position = new Vector3(transform.position.x, transform.position.y, transform.position.z);
     }
 }

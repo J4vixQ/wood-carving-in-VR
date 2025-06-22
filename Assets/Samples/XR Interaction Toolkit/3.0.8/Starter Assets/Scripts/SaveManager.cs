@@ -1,67 +1,47 @@
 using UnityEngine;
-using System.IO;
+using UnityEngine.SceneManagement;
 
-[System.Serializable]
-public class SaveData
+public static class SaveManager
 {
-    public string selectedShape;
-    public Vector3 position;
-    public Vector3 scale;
-    public Quaternion rotation;
-
-    public bool inRoomMenuActive;
-    public bool configMenuActive;
-}
-
-public class SaveManager : MonoBehaviour
-{
-    public GameObject carvedObject;       // Assign in Inspector
-    public string selectedShape = "Cube"; // Set from dropdown logic
-    public GameObject inRoomMenuPanel;    // Assign in Inspector
-    public GameObject configMenuPanel;    // Assign in Inspector
-
-    private string savePath;
-
-    void Start()
+    public static void SaveGame(Transform player)
     {
-        savePath = Application.persistentDataPath + "/savefile.json";
+        PlayerPrefs.SetString("LastScene", SceneManager.GetActiveScene().name);
+
+        if (player != null)
+        {
+            PlayerPrefs.SetFloat("PlayerPosX", player.position.x);
+            PlayerPrefs.SetFloat("PlayerPosY", player.position.y);
+            PlayerPrefs.SetFloat("PlayerPosZ", player.position.z);
+        }
+
+        PlayerPrefs.Save();
+        Debug.Log("Game saved by SaveManager.");
     }
 
-    public void SaveScene()
+    public static void LoadGame(Transform player)
     {
-        SaveData data = new SaveData
+        if (!PlayerPrefs.HasKey("LastScene"))
         {
-            selectedShape = selectedShape,
-            position = carvedObject.transform.position,
-            scale = carvedObject.transform.localScale,
-            rotation = carvedObject.transform.rotation,
-            inRoomMenuActive = inRoomMenuPanel.activeSelf,
-            configMenuActive = configMenuPanel.activeSelf
-        };
-
-        string json = JsonUtility.ToJson(data);
-        File.WriteAllText(savePath, json);
-        Debug.Log("Saved to: " + savePath);
-    }
-
-    public void LoadScene()
-    {
-        if (!File.Exists(savePath))
-        {
-            Debug.LogWarning("No save file found.");
+            Debug.Log("No saved game found.");
             return;
         }
 
-        string json = File.ReadAllText(savePath);
-        SaveData data = JsonUtility.FromJson<SaveData>(json);
+        string sceneName = PlayerPrefs.GetString("LastScene");
+        SceneManager.sceneLoaded += (Scene scene, LoadSceneMode mode) =>
+        {
+            SceneManager.sceneLoaded -= null; // optional cleanup
 
-        selectedShape = data.selectedShape;
-        carvedObject.transform.position = data.position;
-        carvedObject.transform.localScale = data.scale;
-        carvedObject.transform.rotation = data.rotation;
-        inRoomMenuPanel.SetActive(data.inRoomMenuActive);
-        configMenuPanel.SetActive(data.configMenuActive);
+            if (player != null)
+            {
+                float x = PlayerPrefs.GetFloat("PlayerPosX", player.position.x);
+                float y = PlayerPrefs.GetFloat("PlayerPosY", player.position.y);
+                float z = PlayerPrefs.GetFloat("PlayerPosZ", player.position.z);
+                player.position = new Vector3(x, y, z);
+            }
 
-        Debug.Log("Loaded from: " + savePath);
+            Debug.Log("Game loaded by SaveManager.");
+        };
+
+        SceneManager.LoadScene(sceneName);
     }
 }

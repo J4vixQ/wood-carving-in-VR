@@ -84,7 +84,7 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets
                 // 控制台输出案件信息
                 if (Mathf.Abs(stickVal.x) > 0.1f || Mathf.Abs(stickVal.y) > 0.1f)
                 {
-                    Debug.Log($"[XR] ({m_HandSide}) Thumbstick moved: {stickVal}");
+                    //Debug.Log($"[XR] ({m_HandSide}) Thumbstick moved: {stickVal}");
                 }
             }
 
@@ -95,7 +95,7 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets
 
                 if (triggerVal > 0.01f)
                 {
-                    Debug.Log($"[XR] ({m_HandSide}) Trigger pressed: {triggerVal:F2}");
+                    //Debug.Log($"[XR] ({m_HandSide}) Trigger pressed: {triggerVal:F2}");
                 }
             }
 
@@ -107,23 +107,23 @@ namespace UnityEngine.XR.Interaction.Toolkit.Samples.StarterAssets
 
                 if (gripVal > 0.01f)
                 {
-                    Debug.Log($"[XR] ({m_HandSide}) Grip pressed: {gripVal:F2}");
+                    //Debug.Log($"[XR] ({m_HandSide}) Grip pressed: {gripVal:F2}");
                 }
             }
 
-            // 新增：监听右手菜单键
-            var deviceR = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
-            if (deviceR.isValid && deviceR.TryGetFeatureValue(CommonUsages.menuButton, out bool menuPressedR) && menuPressedR)
-            {
-                Debug.Log("[XR] Menu button pressed (右手控制器)");
-            }
+            //// 新增：监听右手菜单键
+            //var deviceR = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
+            //if (deviceR.isValid && deviceR.TryGetFeatureValue(CommonUsages.menuButton, out bool menuPressedR) && menuPressedR)
+            //{
+            //    Debug.Log("[XR] Menu button pressed (右手控制器)");
+            //}
 
-            // 新增：监听左手菜单键
-            var deviceL = InputDevices.GetDeviceAtXRNode(XRNode.LeftHand);
-            if (deviceL.isValid && deviceL.TryGetFeatureValue(CommonUsages.menuButton, out bool menuPressedL) && menuPressedL)
-            {
-                Debug.Log("[XR] Menu button pressed (左手控制器)");
-            }
+            //// 新增：监听左手菜单键
+            //var deviceL = InputDevices.GetDeviceAtXRNode(XRNode.LeftHand);
+            //if (deviceL.isValid && deviceL.TryGetFeatureValue(CommonUsages.menuButton, out bool menuPressedL) && menuPressedL)
+            //{
+            //    Debug.Log("[XR] Menu button pressed (左手控制器)");
+            //}
 
         }
     }

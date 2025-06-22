@@ -17,7 +17,7 @@ public class Chunk : MonoBehaviour
     public Material material = null;
 
 
-    private GridPoint[,,] p = null;
+    public GridPoint[,,] p = null;
     private List<Vector3> vertices = new List<Vector3>();
     private List<int> triangles = new List<int>();
     private List<Vector2> uv = new List<Vector2>();
@@ -25,15 +25,18 @@ public class Chunk : MonoBehaviour
     private bool allClear = false; // set it to True if there is no mesh in this chunk, which means that we can skip the collision and checking.
 
     private Knife _knife;
+    private object _marchCubeLock = new object();
+    public CarvingObject carve_object;
 
     private AudioSource audioSource;
     private AudioClip[] carvingClips;
 
-    public void Setup(float size, float stepSize, Material material)
+    public void Setup(float size, float stepSize, Material material, CarvingObject carve_object)
     {
         this.size = size;
         this.stepSize = stepSize;
         this.material = material;
+        this.carve_object = carve_object;
     }
 
     public void Init()
@@ -59,6 +62,7 @@ public class Chunk : MonoBehaviour
                 if (updateGridValue(other))
                 {
                     // var startTime = Time.realtimeSinceStartup;
+                    this.carve_object.isUpdate = true;
                     MarchCubes();
                     // var endTime = Time.realtimeSinceStartup;
                     // Debug.Log($"MarchCubes: {endTime - startTime} seconds");
@@ -112,10 +116,10 @@ public class Chunk : MonoBehaviour
             }
         }
     }
-    private void MarchCubes()
+    public void MarchCubes()
     {
         GameObject go = this.gameObject;
-        MarchingCube.GetMesh(ref go, ref material, true);
+        MarchingCube.GetMesh(ref go, ref material, false);
 
         vertices.Clear();
         triangles.Clear();
