@@ -45,10 +45,21 @@ public class MainMenuController : MonoBehaviour
     // Start a brand new game
     public void StartNewGame()
     {
-        //PlayerPrefs.DeleteAll();  // Clear saved data
-        //SceneManager.LoadScene("GameScene");  // ✅ Correct
-        // Load your main game scene
-        Debug.Log("start pressed");
+        
+        
+        Debug.Log("Start New Game");
+        //SaveManager.LoadGame(playerTransform);
+        CarvingObject carvingObject = _carving_object.GetComponent<CarvingObject>();
+        bool r = carvingObject.loadFromFile("default");
+        if (r)
+        {
+            Debug.Log("Load successful");
+        }
+        else
+        {
+            Debug.LogError("Load failed");
+        }
+
     }
 
     // Load a previously saved game
@@ -56,7 +67,7 @@ public class MainMenuController : MonoBehaviour
     {
         //SaveManager.LoadGame(playerTransform);
         CarvingObject carvingObject = _carving_object.GetComponent<CarvingObject>();
-        bool r = carvingObject.loadFromFile("Test");
+        bool r = carvingObject.loadFromFile("Test");  // save_20250622_1
         if (r)
         {
             Debug.Log("Load successful");
