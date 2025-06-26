@@ -328,7 +328,9 @@ public class CarvingObject : MonoBehaviour
 
         try
         {
-            using (BinaryWriter writer = new BinaryWriter(File.Open(fileName, FileMode.Create)))
+            string fullPath = Path.Combine(Application.persistentDataPath, fileName + ".bin");
+
+            using (BinaryWriter writer = new BinaryWriter(File.Open(fullPath, FileMode.Create)))
             {
                 writer.Write(chunkSize);
                 writer.Write(gridSize);
@@ -358,8 +360,9 @@ public class CarvingObject : MonoBehaviour
     public bool loadFromFile(string fileName)
     {
         bool result = false;
+        string fullPath = Path.Combine(Application.persistentDataPath, fileName + ".bin");
         // check if file exists
-        if (File.Exists(fileName))
+        if (File.Exists(fullPath))
         {
             float tempChunkSize, tempGridSize;
             int x, y, z;
@@ -367,7 +370,7 @@ public class CarvingObject : MonoBehaviour
             // read data from file
             try
             {
-                using (BinaryReader reader = new BinaryReader(File.Open(fileName, FileMode.Open)))
+                using (BinaryReader reader = new BinaryReader(File.Open(fullPath, FileMode.Open)))
                 {
                     tempChunkSize = reader.ReadSingle();
                     tempGridSize = reader.ReadSingle();

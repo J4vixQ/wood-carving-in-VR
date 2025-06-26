@@ -67,7 +67,7 @@ public class MainMenuController : MonoBehaviour
     {
         //SaveManager.LoadGame(playerTransform);
         CarvingObject carvingObject = _carving_object.GetComponent<CarvingObject>();
-        bool r = carvingObject.loadFromFile("Test");  // save_20250622_1
+        bool r = carvingObject.loadFromFile("Save");  // save_20250622_1
         if (r)
         {
             Debug.Log("Load successful");
@@ -82,7 +82,7 @@ public class MainMenuController : MonoBehaviour
     public void SaveGame()
     {
         CarvingObject carvingObject = _carving_object.GetComponent<CarvingObject>();
-        bool r = carvingObject.saveToFile("Test");
+        bool r = carvingObject.saveToFile("Save");
         if (r)
         {
             Debug.Log("Save successful");
