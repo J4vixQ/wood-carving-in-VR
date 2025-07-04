@@ -23,6 +23,9 @@ public class CarvingObject : MonoBehaviour
     private static int buffer_size = 10;
     public bool isUpdate = false;
 
+    private bool gripDownLastFrame = false;
+    private bool menuDownLastFrame = false;
+
     // Updated - for 3D print
     private GridPoint[,,] p = null;
     private List<Vector3> vertices = new List<Vector3>();
@@ -89,6 +92,43 @@ public class CarvingObject : MonoBehaviour
         addValues();
     }
 
+    void Update()
+    {
+        InputDevice deviceL = InputDevices.GetDeviceAtXRNode(XRNode.LeftHand);
+
+        // Undo function: Grip¼üµ¥»÷´¥·¢
+        if (deviceL.isValid && deviceL.TryGetFeatureValue(CommonUsages.gripButton, out bool gripPressed))
+        {
+            if (gripPressed && !gripDownLastFrame)
+            {
+                float[,,] last_values = getLastBuffer();
+                if (last_values is null)
+                {
+                    Debug.Log($"No data to undo!!");
+                }
+                else
+                {
+                    Debug.Log($"Undo!!");
+                    Array.Copy(last_values, values, values.Length);
+                    assignValueToChunk();
+                }
+            }
+            gripDownLastFrame = gripPressed;
+        }
+
+        // Í¸Ã÷ÇÐ»»£ºMenu¼üµ¥»÷´¥·¢
+        if (deviceL.isValid && deviceL.TryGetFeatureValue(CommonUsages.menuButton, out bool menuPressed))
+        {
+            if (menuPressed && !menuDownLastFrame)
+            {
+                isTransparent = !isTransparent;
+                setAlpha(isTransparent ? targetAlpha : 1f);
+            }
+            menuDownLastFrame = menuPressed;
+        }
+    }
+
+
     private void FixedUpdate()
     {
         timer += Time.fixedDeltaTime;
@@ -124,24 +164,24 @@ public class CarvingObject : MonoBehaviour
             }
 
             // Undo function
-
-            if (deviceL.isValid && deviceL.TryGetFeatureValue(CommonUsages.gripButton, out bool gripPressed))
-            {
-                if (gripPressed)
-                {
-                    float[,,] last_values = getLastBuffer();
-                    if (last_values is null)
-                    {
-                        Debug.Log($"No data to undo!!");
-                    }
-                    else
-                    {
-                        Debug.Log($"Undo!!");
-                        Array.Copy(last_values, values, values.Length);
-                        assignValueToChunk();
-                    }
-                }
-            }
+            //if (deviceL.isValid && deviceL.TryGetFeatureValue(CommonUsages.gripButton, out bool gripPressed))
+            //{
+            //    if (gripPressed)
+            //    {
+            //        float[,,] last_values = getLastBuffer();
+            //        if (last_values is null)
+            //        {
+            //            Debug.Log($"No data to undo!!");
+            //        }
+            //        else
+            //        {
+            //            Debug.Log($"Undo!!");
+            //            Array.Copy(last_values, values, values.Length);
+            //            assignValueToChunk();
+            //        }
+            //    }
+            //    gripDownLastFrame = gripPressed;
+            //}
             //if (Input.GetKey(KeyCode.U))
             //{
 
@@ -159,14 +199,15 @@ public class CarvingObject : MonoBehaviour
 
             //}
 
-            if (deviceL.isValid && deviceL.TryGetFeatureValue(CommonUsages.menuButton, out bool menuPressed))
-            {
-                if (menuPressed)
-                {
-                    isTransparent = !isTransparent;
-                    setAlpha(isTransparent ? targetAlpha : 1f);
-                }
-            }
+            //if (deviceL.isValid && deviceL.TryGetFeatureValue(CommonUsages.menuButton, out bool menuPressed))
+            //{
+            //    if (menuPressed)
+            //    {
+            //        isTransparent = !isTransparent;
+            //        setAlpha(isTransparent ? targetAlpha : 1f);
+            //    }
+            //    menuDownLastFrame = menuPressed;
+            //}
 
             //if (Input.GetKey(KeyCode.P))
             //{
