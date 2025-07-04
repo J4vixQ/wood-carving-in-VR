@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using UnityEngine;
 using UnityEngine.XR;
@@ -22,6 +23,13 @@ public class CarvingObject : MonoBehaviour
     private static int buffer_size = 10;
     public bool isUpdate = false;
 
+    // Updated - for 3D print
+    private GridPoint[,,] p = null;
+    private List<Vector3> vertices = new List<Vector3>();
+    private List<int> triangles = new List<int>();
+    private List<Vector2> uv = new List<Vector2>();
+    private GridCell cell = new GridCell();
+
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -29,11 +37,15 @@ public class CarvingObject : MonoBehaviour
         // material = Resources.Load("Materials/subtle-grained-wood_albedo", typeof(Material)) as Material;
         Chunk.assignValueFunc = gripValueFunc;
         createChunks();
-        GameObject dog = GameObject.Find("Dog");
-        dog.transform.rotation = this.transform.rotation;
+        //GameObject dog = GameObject.Find("Dog");
+        //dog.transform.rotation = this.transform.rotation;
 
-        GameObject dog_mesh = GameObject.Find("Dog/default");
-        dog.transform.position += this.transform.position - dog_mesh.GetComponent<Renderer>().bounds.center;
+        //GameObject dog_mesh = GameObject.Find("Dog/default");
+        //dog.transform.position += this.transform.position - dog_mesh.GetComponent<Renderer>().bounds.center;
+
+        GameObject target = GameObject.Find("WoodenBarrel");
+        target.transform.rotation = this.transform.rotation;
+        target.transform.position += this.transform.position - target.GetComponent<Renderer>().bounds.center;
     }
 
     float gripValueFunc(Vector3 gridLocalPos, Transform chunk_transform)
@@ -320,7 +332,7 @@ public class CarvingObject : MonoBehaviour
                 }
     }
 
-    public bool saveToFile(string fileName)
+    public bool saveToFile()
     {
         bool result = false;
 
@@ -328,7 +340,10 @@ public class CarvingObject : MonoBehaviour
 
         try
         {
-            string fullPath = Path.Combine(Application.persistentDataPath, fileName + ".bin");
+            //string fullPath = Path.Combine(Application.persistentDataPath, fileName + ".bin");
+            string timeStr = System.DateTime.Now.ToString("yyyyMMdd_HHmmss"); // 年月日_时分秒
+            string fileNameWithTime = $"Save_{timeStr}";
+            string fullPath = Path.Combine(Application.persistentDataPath, fileNameWithTime + ".bin");
 
             using (BinaryWriter writer = new BinaryWriter(File.Open(fullPath, FileMode.Create)))
             {
@@ -348,12 +363,12 @@ public class CarvingObject : MonoBehaviour
 
                 result = true;
             }
+            Debug.Log("Save file path: " + fullPath);
         }
-        catch (Exception)
+        catch (Exception e)
         {
-
+            Debug.LogError(e);
         }
-
         return result;
     }
 
@@ -410,5 +425,154 @@ public class CarvingObject : MonoBehaviour
         }
 
         return result;
+    }
+
+    public void Create3DPrintMesh()
+    {
+        mergeChunkValues();
+        filterValues();
+        p = new GridPoint[values.GetLength(0), values.GetLength(1), values.GetLength(2)];
+        for (int k = 0; k < p.GetLength(2); k++)
+            for (int j = 0; j < p.GetLength(1); j++)
+                for (int i = 0; i < p.GetLength(0); i++)
+                {
+                    p[i, j, k] = new GridPoint();
+                    p[i, j, k].Value = values[i, j, k];
+                    p[i, j, k].Position = (new Vector3(i, j, k) - new Vector3(values.GetLength(0), values.GetLength(1), values.GetLength(2)) / 2.0f) * gridSize;
+                }
+
+        MarchCubes();
+        saveAsSTL("Sample.stl");
+        Destroy(GetComponent<MeshFilter>());
+        Destroy(GetComponent<MeshRenderer>());
+
+    }
+
+    private void saveAsSTL(string filePath)
+    {
+        Mesh mesh = this.GetComponent<MeshFilter>().mesh;
+        using (StreamWriter writer = new StreamWriter(filePath))
+        {
+            writer.WriteLine("solid exportedMesh");
+
+            Vector3[] vertices = mesh.vertices;
+            int[] triangles = mesh.triangles;
+            Vector3[] normals = mesh.normals;
+
+            for (int i = 0; i < triangles.Length; i += 3)
+            {
+                int i1 = triangles[i];
+                int i2 = triangles[i + 1];
+                int i3 = triangles[i + 2];
+
+                Vector3 v1 = transform.TransformPoint(vertices[i1]);
+                Vector3 v2 = transform.TransformPoint(vertices[i2]);
+                Vector3 v3 = transform.TransformPoint(vertices[i3]);
+
+                Vector3 normal = Vector3.Cross(v2 - v1, v3 - v1).normalized;
+
+                writer.WriteLine($" facet normal {Float3(normal)}");
+                writer.WriteLine("  outer loop");
+                writer.WriteLine($"   vertex {Float3(v1)}");
+                writer.WriteLine($"   vertex {Float3(v2)}");
+                writer.WriteLine($"   vertex {Float3(v3)}");
+                writer.WriteLine("  endloop");
+                writer.WriteLine(" endfacet");
+            }
+
+            writer.WriteLine("endsolid exportedMesh");
+        }
+
+        Debug.Log("STL exported to: " + filePath);
+    }
+
+
+    private static string Float3(Vector3 v)
+    {
+        return $"{v.x.ToString("G", CultureInfo.InvariantCulture)} " +
+               $"{v.y.ToString("G", CultureInfo.InvariantCulture)} " +
+               $"{v.z.ToString("G", CultureInfo.InvariantCulture)}";
+    }
+
+    private void MarchCubes()
+    {
+        GameObject go = this.gameObject;
+        MarchingCube.GetMesh(ref go, ref material, false); // Updated
+
+        vertices.Clear();
+        triangles.Clear();
+        uv.Clear();
+
+        /*  vertex 8 (0-7)
+            E4-------------F5         7654-3210
+            |               |         HGFE-DCBA
+            |               |
+        H7-------------G6     |
+        |     |         |     |
+        |     |         |     |
+        |     A0--------|----B1  
+        |               |
+        |               |
+        D3-------------C2               */
+
+        for (int x = 0; x < p.GetLength(0) - 1; x++)
+        {
+            for (int y = 0; y < p.GetLength(1) - 1; y++)
+            {
+                for (int z = 0; z < p.GetLength(2) - 1; z++)
+                {
+                    cell.Reset();
+                    cell.A0 = p[x, y, z + 1];
+                    cell.B1 = p[x + 1, y, z + 1];
+                    cell.C2 = p[x + 1, y, z];
+                    cell.D3 = p[x, y, z];
+                    cell.E4 = p[x, y + 1, z + 1];
+                    cell.F5 = p[x + 1, y + 1, z + 1];
+                    cell.G6 = p[x + 1, y + 1, z];
+                    cell.H7 = p[x, y + 1, z];
+
+
+                    MarchingCube.IsoFaces(ref cell, 0); // surfaceLevel is always 0.
+                    CreateCell();
+                }
+            }
+        }
+
+        Vector3[] av = vertices.ToArray();
+        int[] at = triangles.ToArray();
+        Vector2[] au = uv.ToArray();
+        MarchingCube.SetMesh(ref go, ref av, ref at, ref au);
+    }
+    private void CreateCell()
+    {
+        bool uvAlternate = false;
+        for (int i = 0; i < cell.numtriangles; i++)
+        {
+            vertices.Add(cell.triangle[i].p[0]);
+            vertices.Add(cell.triangle[i].p[1]);
+            vertices.Add(cell.triangle[i].p[2]);
+
+            triangles.Add(vertices.Count - 1);
+            triangles.Add(vertices.Count - 2);
+            triangles.Add(vertices.Count - 3);
+
+            /*  A ------ B
+                |        |
+                |        |
+                D ------ C  */
+            if (uvAlternate == true)
+            {
+                uv.Add(UVCoord.A);
+                uv.Add(UVCoord.C);
+                uv.Add(UVCoord.D);
+            }
+            else
+            {
+                uv.Add(UVCoord.A);
+                uv.Add(UVCoord.B);
+                uv.Add(UVCoord.C);
+            }
+            uvAlternate = !uvAlternate;
+        }
     }
 }

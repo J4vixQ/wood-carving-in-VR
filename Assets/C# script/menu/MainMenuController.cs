@@ -82,7 +82,9 @@ public class MainMenuController : MonoBehaviour
     public void SaveGame()
     {
         CarvingObject carvingObject = _carving_object.GetComponent<CarvingObject>();
-        bool r = carvingObject.saveToFile("Save");
+        //carvingObject.Create3DPrintMesh();
+        //bool r = carvingObject.saveToFile("Save");
+        bool r = carvingObject.saveToFile();
         if (r)
         {
             Debug.Log("Save successful");
